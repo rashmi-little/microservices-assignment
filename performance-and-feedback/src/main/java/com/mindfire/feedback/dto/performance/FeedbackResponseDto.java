@@ -1,4 +1,4 @@
-package com.mindfire.feedback.dto;
+package com.mindfire.feedback.dto.performance;
 
 import com.mindfire.feedback.constant.FeedbackStatus;
 
