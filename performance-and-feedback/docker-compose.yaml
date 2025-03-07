@@ -1,0 +1,124 @@
+version: '3.7'
+
+services:
+  mysql:
+    container_name: mysqldbcontainer
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ems
+    ports:
+      - "3307:3306"
+    networks:
+      - sql-web-net
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: unless-stopped
+
+  react-app:
+    image: little001/ems-frontend
+    container_name: ems-frontend
+    ports:
+      - 5173:5173
+    depends_on:
+      - ems
+      - pms
+    networks:
+      - microservice-network
+
+  config-server:
+    image: little001/configserverimg
+    container_name: config-server
+    ports:
+      - 8888:8888
+    depends_on:
+      - serviceregservicereg
+    networks:
+      - microservice-network
+      - sql-web-net
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  serviceregservicereg:
+    image: little001/serviceregimg
+    container_name: serviceregservicereg
+    ports:
+      - "8761:8761"
+    depends_on:
+      - zipkin
+      - mysql
+    networks:
+      - microservice-network
+      - sql-web-net
+
+  ems:
+    image: little001/employeemanagementimg
+    container_name: ems-container
+    ports:
+      - 2200:2200
+    depends_on:
+      - serviceregservicereg
+      - config-server
+    networks:
+      - microservice-network
+      - sql-web-net
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: on-failure
+
+  pms:
+    image: little001/performancefeedbackimg
+    container_name: pms-container
+    ports:
+      - 8081:8081
+    depends_on:
+      - serviceregservicereg
+      - config-server
+    networks:
+      - microservice-network
+      - sql-web-net
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - 9411:9411
+    networks:
+      - microservice-network
+      - sql-web-net
+
+  ems-gateway:
+    image: little001/emsgatewayimg
+    ports:
+      - 8765:8080
+    depends_on:
+      - serviceregservicereg
+      - redis
+    networks:
+      - microservice-network
+      - sql-web-net
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - 6379:6379
+    networks:
+      - microservice-network
+      - sql-web-net
+    restart: always
+    volumes:
+      - redis-data:/data
+networks:
+  microservice-network:
+    driver: bridge
+  sql-web-net:
+    driver: bridge
+
+volumes:
+  redis-data:
+  mysql-data:

@@ -19,13 +19,12 @@ public class Feedback {
     private long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "feedback_status")
+    @Column(name = "feedback_status", nullable = false)
     private FeedbackStatus feedbackStatus;
 
-    @Column(name = "description", length = 300)
+    @Column(name = "description", length = 300, nullable = false)
     private String description;
 
-    @Column(name = "emp_id")
-    @Positive(message = MessageConstants.POSITIVE_CONSTRAINT)
+    @Column(name = "emp_id", nullable = false)
     private int employeeId;
 }
